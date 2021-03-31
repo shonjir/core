@@ -137,7 +137,7 @@ if __name__ == '__main__':
         if blacklist_items:
             unbound_outf.write('server:\n')
             for entry in blacklist_items:
-                unbound_outf.write("local-data: \"%s A 0.0.0.0\"\n" % entry)
+                unbound_outf.write("local-zone: \"%s\" inform_redirect\n" % entry)
 
     syslog.syslog(syslog.LOG_NOTICE, "blacklist download done in %0.2f seconds (%d records)" % (
         time.time() - startup_time, len(blacklist_items)
