@@ -2,7 +2,7 @@
 <?php
 
 /*
- * Copyright (c) 2021 Franco Fichtner <franco@opnsense.org>
+ * Copyright (C) 2021 Deciso B.V.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-$metafile = '/usr/local/opnsense/version/core';
+require_once("config.inc");
+require_once("certs.inc");
+require_once("legacy_bindings.inc");
 
-$ret = json_decode(@file_get_contents($metafile), true);
-if ($ret != null) {
-    $ret['product_crypto'] = trim(shell_exec('opnsense-version -f'));
-    $ret['product_mirror'] = preg_replace('/\/[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}\//i', '/${SUBSCRIPTION}/', trim(shell_exec('opnsense-update -M')));
-    $ret['product_time'] = date('D M j H:i:s T Y', filemtime('/usr/local/opnsense/www/index.php'));
-    $repos = explode("\n", trim(shell_exec('opnsense-verify -l')));
-    sort($repos);
-    $ret['product_repos'] = implode(', ', $repos);
-    $ret['product_check'] = json_decode(@file_get_contents('/tmp/pkg_upgrade.json'), true);
-    ksort($ret);
-} else {
-    $ret = [];
+use OPNsense\Core\Config;
+
+$instances = [];
+$configObj = Config::getInstance()->object();
+@mkdir("/usr/local/etc/syslog-ng/cert.d", 0700, true);
+foreach ((new OPNsense\Syslog\Syslog())->destinations->destination->iterateItems() as $id => $item) {
+    if (in_array($item->transport, ['tls4', 'tls6']) && !empty($configObj->cert) && (string)$item->enabled == "1"){
+        $dest_key = str_replace("-", "", $id);
+        $instances[] = $dest_key;
+        $cert_refid = (string)$item->certificate;
+        foreach ($configObj->cert as $cert) {
+            if ($cert_refid == (string)$cert->refid) {
+                file_put_contents("/usr/local/etc/syslog-ng/cert.d/{$dest_key}.key", base64_decode((string)$cert->prv));
+                file_put_contents("/usr/local/etc/syslog-ng/cert.d/{$dest_key}.crt", base64_decode((string)$cert->crt));
+            }
+        }
+    }
 }
 
-echo json_encode($ret, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;
+// cleanup old/unused certs
+foreach (glob("/usr/local/etc/syslog-ng/cert.d/*") as $filename) {
+    $instance = explode(".", basename($filename))[0];
+    $ext = pathinfo($filename)['extension'];
+    if (!in_array($instance, $instances) && in_array($ext, ['crt', 'key'])) {
+        unlink($filename);
+    }
+}

@@ -413,7 +413,7 @@ function local_sync_accounts()
             foreach ($data as $record) {
                 $line = explode(':', $record);
                 // filter system managed users and groups
-                if (count($line) < 3 ||  !strncmp($line[0], '_', 1) || $line[2] < 2000 || $line[2] > 65000) {
+                if (count($line) < 3 ||  !strncmp($line[0], '_', 1) || ($line[2] < 2000 && $line[0] != 'root') || $line[2] > 65000) {
                     continue;
                 }
                 $current_data[$section][$line[2]] = $line;
@@ -546,6 +546,7 @@ function local_user_set(&$user, $force_password = false, $userattrs = null)
         $user_op = 'useradd -m -k /usr/share/skel -o';
     } elseif (
         $userattrs[0] == $user_name &&
+        /* XXX $user_pass comparison? */
         $userattrs[2] == $user_uid &&
         $userattrs[3] == $user_gid &&
         $userattrs[7] == $comment &&

@@ -244,6 +244,7 @@ function core_syslog()
 {
     $logfacilities = array();
 
+    $logfacilities['audit'] = array('facility' => array('audit'));
     $logfacilities['configd'] = array('facility' => array('configd.py'));
     $logfacilities['dhcpd'] = array('facility' => array('dhcpd', 'dhcrelay'));
     $logfacilities['filter'] = array('facility' => array('filterlog'));
@@ -382,7 +383,7 @@ function core_xmlrpc_sync()
         'help' => gettext('Synchronize the Static Route configuration and Gateways to the other HA host.'),
         'section' => 'staticroutes,gateways',
         'id' => 'staticroutes',
-        'services' => ["routing"],
+        'services' => ["routing", "dpinger"],
     );
     $result[] = array(
         'description' => gettext('Network Time'),

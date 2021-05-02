@@ -255,7 +255,7 @@ function ipsec_firewall(\OPNsense\Firewall\Plugin $fw)
                             }
                         }
                     }
-                    $interface = explode("_vhid", $ph1ent['interface'])[0];
+                    $interface = explode("_vip", $ph1ent['interface'])[0];
                     $baserule = array("interface" => $interface,
                                       "log" => !isset($config['syslog']['nologdefaultpass']),
                                       "quick" => false,
@@ -531,9 +531,11 @@ function ipsec_parse_phase2($ikeid)
             }
         } else {
             // merge tunnels
-            $result['reqids'] = [min($result['reqids'])];
-            for ($idx = 0; $idx < count($result['leftsubnets']); ++$idx) {
-                $result['uniqid_reqid'][$uniqids[$idx]] = $result['reqids'][0];
+            if (!empty($result['reqids'])) {
+                $result['reqids'] = [min($result['reqids'])];
+                for ($idx = 0; $idx < count($result['leftsubnets']); ++$idx) {
+                    $result['uniqid_reqid'][$uniqids[$idx]] = $result['reqids'][0];
+                }
             }
             $result['leftsubnets'] = array_unique($result['leftsubnets']);
             $result['rightsubnets'] = array_unique($result['rightsubnets']);
@@ -811,6 +813,9 @@ function ipsec_find_id(&$ph1ent, $side = 'local')
             break;
         case "peeraddress":
             $thisid_data = ipsec_resolve($ph1ent['remote-gateway']);
+            break;
+        case "fqdn":
+            $thisid_data = !empty($id_data) ? "fqdn:{$id_data}" : null;
             break;
         case "keyid tag":
             $thisid_data = !empty($id_data) ? "keyid:{$id_data}" : null;
@@ -1530,6 +1535,12 @@ function ipsec_configure_do($verbose = false, $interface = '')
                 } else {
                     $inactivityline = '';
                 }
+                if (!empty($ph1ent['keyingtries'])) {
+                    $keyingtriesline = "keyingtries = " ;
+                    $keyingtriesline .= $ph1ent['keyingtries'] == -1 ? "%forever" : $ph1ent['keyingtries'];
+                } else {
+                    $keyingtriesline = '';
+                }
 
                 if (!empty($ph1ent['lifetime'])) {
                     $ikelifeline = "ikelifetime = {$ph1ent['lifetime']}s";
@@ -1661,6 +1672,7 @@ conn con<<connectionId>>
   type = {$parsed_phase2['type']}
   {$dpdline}
   {$inactivityline}
+  {$keyingtriesline}
   left = {$left_spec}
   right = {$right_spec}
   {$right_any}

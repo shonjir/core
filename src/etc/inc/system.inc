@@ -153,6 +153,8 @@ function system_sysctl_get()
         }
     }
 
+    ksort($sysctls);
+
     return $sysctls;
 }
 
@@ -671,6 +673,8 @@ EOD;
         }
     }
 
+    // deploy certificates (separate caller in case we ever remove clog, in which case we can move all to configd)
+    mwexecf("/usr/local/opnsense/scripts/syslog/generate_certs");
     if (!empty($config['syslog']['disable_clog'])) {
         // non legacy mode
         if (isvalidpid('/var/run/syslog.pid')) {
@@ -922,11 +926,6 @@ function system_kernel_configure($verbose = false)
         $mods[] = $config['system']['crypto_hardware'];
     }
 
-    if (!empty($config['system']['cryptodev_enable'])) {
-        log_error('Loading cryptodev kernel module.');
-        $mods[] = 'cryptodev';
-    }
-
     if (!empty($config['system']['thermal_hardware'])) {
         log_error(sprintf('Loading %s thermal monitor module.', $config['system']['thermal_hardware']));
         $mods[] = $config['system']['thermal_hardware'];
@@ -1149,12 +1148,6 @@ function system_login_configure($verbose = false)
     /* copy settings already there */
     $new_loader_conf = @file_get_contents('/boot/loader.conf');
 
-    $new_loader_conf .= "# dynamically generated tunables settings follow\n";
-    foreach (system_sysctl_get() as $param => $value) {
-        $new_loader_conf .= "{$param}=\"{$value}\"\n";
-    }
-    $new_loader_conf .= "\n";
-
     $new_loader_conf .= "# dynamically generated console settings follow\n";
     foreach ($new_boot_config as $param => $value) {
         if (!empty($value)) {
@@ -1162,6 +1155,12 @@ function system_login_configure($verbose = false)
         } else {
             $new_loader_conf .= "#${param}\n";
         }
+    }
+    $new_loader_conf .= "\n";
+
+    $new_loader_conf .= "# dynamically generated tunables settings follow\n";
+    foreach (system_sysctl_get() as $param => $value) {
+        $new_loader_conf .= "{$param}=\"{$value}\"\n";
     }
 
     /* write merged file back to target location */

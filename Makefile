@@ -29,6 +29,7 @@ all:
 .include "Mk/defaults.mk"
 
 CORE_MESSAGE?=	Carry on my wayward son
+CORE_NICKNAME?=	Not Yet
 CORE_NAME?=	opnsense-devel
 CORE_TYPE?=	development
 
@@ -75,6 +76,9 @@ CORE_VERSION?=	${CORE_COMMIT:[1]}
 CORE_REVISION?=	${CORE_COMMIT:[2]}
 CORE_HASH?=	${CORE_COMMIT:[3]}
 
+_CORE_SERIES=	${CORE_VERSION:S/./ /g}
+CORE_SERIES?=	${_CORE_SERIES:[1]}.${_CORE_SERIES:[2]}
+
 .if "${CORE_REVISION}" != "" && "${CORE_REVISION}" != "0"
 CORE_PKGVERSION=	${CORE_VERSION}_${CORE_REVISION}
 .else
@@ -103,7 +107,6 @@ CORE_COPYRIGHT_WWW?=	https://www.deciso.com/
 CORE_COPYRIGHT_YEARS?=	2014-2021
 
 CORE_DEPENDS_amd64?=	beep \
-			bsdinstaller \
 			suricata-devel
 
 CORE_DEPENDS?=		${CORE_DEPENDS_${CORE_ARCH}} \
@@ -129,6 +132,7 @@ CORE_DEPENDS?=		${CORE_DEPENDS_${CORE_ARCH}} \
 			ntp \
 			openssh-portable \
 			openvpn \
+			opnsense-installer \
 			opnsense-lang \
 			opnsense-update \
 			pam_opnsense \
@@ -145,7 +149,7 @@ CORE_DEPENDS?=		${CORE_DEPENDS_${CORE_ARCH}} \
 			php${CORE_PHP}-openssl \
 			php${CORE_PHP}-pdo \
 			php${CORE_PHP}-pecl-radius \
-			php${CORE_PHP}-phalcon \
+			php${CORE_PHP}-phalcon4 \
 			php${CORE_PHP}-phpseclib \
 			php${CORE_PHP}-session \
 			php${CORE_PHP}-simplexml \

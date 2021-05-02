@@ -1,8 +1,8 @@
-#!/usr/local/bin/php
 <?php
 
-/*
- * Copyright (c) 2021 Franco Fichtner <franco@opnsense.org>
+/**
+ * Copyright (C) 2021 Deciso B.V.
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,20 +27,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-$metafile = '/usr/local/opnsense/version/core';
+namespace OPNsense\Diagnostics;
 
-$ret = json_decode(@file_get_contents($metafile), true);
-if ($ret != null) {
-    $ret['product_crypto'] = trim(shell_exec('opnsense-version -f'));
-    $ret['product_mirror'] = preg_replace('/\/[a-z0-9]{8}(-[a-z0-9]{4}){3}-[a-z0-9]{12}\//i', '/${SUBSCRIPTION}/', trim(shell_exec('opnsense-update -M')));
-    $ret['product_time'] = date('D M j H:i:s T Y', filemtime('/usr/local/opnsense/www/index.php'));
-    $repos = explode("\n", trim(shell_exec('opnsense-verify -l')));
-    sort($repos);
-    $ret['product_repos'] = implode(', ', $repos);
-    $ret['product_check'] = json_decode(@file_get_contents('/tmp/pkg_upgrade.json'), true);
-    ksort($ret);
-} else {
-    $ret = [];
+use OPNsense\Base\BaseModel;
+
+class Lvtemplate extends BaseModel
+{
 }
-
-echo json_encode($ret, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . PHP_EOL;

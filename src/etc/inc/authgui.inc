@@ -67,22 +67,21 @@ function session_auth(&$Login_Error)
 
     function auth_log($message)
     {
-        openlog("webgui", LOG_ODELAY, LOG_AUTH);
+        openlog("audit", LOG_ODELAY, LOG_AUTH);
         log_error($message);
         closelog();
     }
 
-    // Handle HTTPS httponly and secure flags
-    $currentCookieParams = session_get_cookie_params();
-    session_set_cookie_params(
-        $currentCookieParams["lifetime"],
-        $currentCookieParams["path"],
-        null,
-        ($config['system']['webgui']['protocol'] == "https"),
-        true
-    );
-
     if (session_status() == PHP_SESSION_NONE) {
+        // Handle HTTPS httponly and secure flags
+        $currentCookieParams = session_get_cookie_params();
+        session_set_cookie_params(
+            $currentCookieParams["lifetime"],
+            $currentCookieParams["path"],
+            null,
+            ($config['system']['webgui']['protocol'] == "https"),
+            true
+        );
         session_start();
     }
 
